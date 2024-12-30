@@ -7,15 +7,6 @@
 
 using namespace std;
 
-struct Order {
-    int orderID;
-    string customerName;
-    string items[10];   
-    double totalCost;
-    string status;           
-    string specialRequest;   
-};
-
 double calculateTotalCost(const string items[], int itemCount) {
     double cost = 0.0;
     for (int i = 0; i < itemCount; ++i) {
@@ -43,16 +34,13 @@ bool isValidItem(const string& item) {
     return false;
 }
 
-void takeOrder(Order orders[], int& orderCount) {
-    int orderID;
-    string customerName, specialRequest;
-    string items[10];
+void takeOrder(int& orderID, string& customerName, string items[], int& itemCount, double& totalCost, string& status, string& specialRequest) {
     string item;
-    int itemCount = 0;
+    itemCount = 0;
 
     cout << "Masukkan ID Pesanan: ";
     cin >> orderID;
-    cin.ignore(); 
+    cin.ignore();
     cout << "Masukkan Nama Pelanggan: ";
     getline(cin, customerName);
 
@@ -74,18 +62,14 @@ void takeOrder(Order orders[], int& orderCount) {
         specialRequest = "Tidak ada permintaan khusus";
     }
 
-    double totalCost = calculateTotalCost(items, itemCount);
-    orders[orderCount++] = { orderID, customerName, {}, totalCost, "Menunggu", specialRequest };
-
-    for (int i = 0; i < itemCount; ++i) {
-        orders[orderCount - 1].items[i] = items[i];
-    }
+    totalCost = calculateTotalCost(items, itemCount);
+    status = "Menunggu";
 
     cout << "Pesanan berhasil dibuat!" << endl;
     cout << "Total Biaya Pesanan: Rp" << fixed << setprecision(2) << totalCost << endl;
 }
 
-void viewActiveOrders(const Order orders[], int orderCount) {
+void viewActiveOrders(int orderID[], string customerName[], double totalCost[], string status[], string items[][10], int itemCount[], int orderCount) {
     if (orderCount == 0) {
         cout << "Tidak ada pesanan aktif saat ini." << endl;
         return;
@@ -93,34 +77,33 @@ void viewActiveOrders(const Order orders[], int orderCount) {
 
     cout << "\nDaftar Pesanan Aktif:" << endl;
     cout << left << setw(10) << "ID Pesanan"
-        << setw(20) << "Nama Pelanggan"
-        << setw(15) << "Total Biaya"
-        << setw(15) << "Status"
-        << "Items" << endl;
+         << setw(20) << "Nama Pelanggan"
+         << setw(15) << "Total Biaya"
+         << setw(15) << "Status"
+         << "Items" << endl;
     cout << string(80, '-') << endl;
 
     for (int i = 0; i < orderCount; ++i) {
-        cout << left << setw(10) << orders[i].orderID
-            << setw(20) << orders[i].customerName
-            << setw(15) << fixed << setprecision(2) << orders[i].totalCost
-            << setw(15) << orders[i].status;
+        cout << left << setw(10) << orderID[i]
+             << setw(20) << customerName[i]
+             << setw(15) << fixed << setprecision(2) << totalCost[i]
+             << setw(15) << status[i];
 
-        for (int j = 0; j < 10 && !orders[i].items[j].empty(); ++j) {
-            cout << orders[i].items[j];
-            if (j != 9 && !orders[i].items[j + 1].empty()) cout << ", ";
+        for (int j = 0; j < itemCount[i]; ++j) {
+            cout << items[i][j];
+            if (j != 9 && !items[i][j + 1].empty()) cout << ", ";
         }
         cout << endl;
-        cout << "   Permintaan Khusus: " << orders[i].specialRequest << endl;
     }
 }
 
-void updateOrderStatus(Order orders[], int orderCount) {
-    int orderID;
+void updateOrderStatus(int orderID[], string status[], int orderCount) {
+    int orderToUpdate;
     string newStatus;
 
     cout << "Masukkan ID Pesanan yang ingin diperbarui: ";
-    cin >> orderID;
-    cin.ignore(); 
+    cin >> orderToUpdate;
+    cin.ignore();
     cout << "Masukkan Status Baru (Menunggu, Dalam Proses, Selesai): ";
     getline(cin, newStatus);
 
@@ -131,8 +114,8 @@ void updateOrderStatus(Order orders[], int orderCount) {
 
     bool found = false;
     for (int i = 0; i < orderCount; ++i) {
-        if (orders[i].orderID == orderID) {
-            orders[i].status = newStatus;
+        if (orderID[i] == orderToUpdate) {
+            status[i] = newStatus;
             found = true;
             break;
         }
@@ -146,14 +129,14 @@ void updateOrderStatus(Order orders[], int orderCount) {
     }
 }
 
-void viewToppingUsage(const Order orders[], int orderCount) {
+void viewToppingUsage(string items[][10], int itemCount[], int orderCount) {
     int kacang = 0, coklat = 0, keju = 0;
 
     for (int i = 0; i < orderCount; ++i) {
-        for (int j = 0; j < 10 && !orders[i].items[j].empty(); ++j) {
-            if (orders[i].items[j] == "Topping Kacang") kacang++;
-            else if (orders[i].items[j] == "Topping Coklat") coklat++;
-            else if (orders[i].items[j] == "Topping Keju") keju++;
+        for (int j = 0; j < itemCount[i]; ++j) {
+            if (items[i][j] == "Topping Kacang") kacang++;
+            else if (items[i][j] == "Topping Coklat") coklat++;
+            else if (items[i][j] == "Topping Keju") keju++;
         }
     }
 
@@ -163,23 +146,23 @@ void viewToppingUsage(const Order orders[], int orderCount) {
     cout << "Topping Keju: " << keju << " porsi" << endl;
 }
 
-void viewDailySalesReport(const Order orders[], int orderCount) {
+void viewDailySalesReport(double totalCost[], int orderCount) {
     double totalSales = 0.0;
     for (int i = 0; i < orderCount; ++i) {
-        totalSales += orders[i].totalCost;
+        totalSales += totalCost[i];
     }
 
     cout << "Laporan Pendapatan Hari Ini: Rp" << fixed << setprecision(2) << totalSales << endl;
 }
 
-void viewMenuPerformance(const Order orders[], int orderCount) {
+void viewMenuPerformance(string items[][10], int itemCount[], int orderCount) {
     int martabakKacang = 0, martabakCoklat = 0, martabakKeju = 0;
 
     for (int i = 0; i < orderCount; ++i) {
-        for (int j = 0; j < 10 && !orders[i].items[j].empty(); ++j) {
-            if (orders[i].items[j] == "Martabak Kacang") martabakKacang++;
-            else if (orders[i].items[j] == "Martabak Coklat") martabakCoklat++;
-            else if (orders[i].items[j] == "Martabak Keju") martabakKeju++;
+        for (int j = 0; j < itemCount[i]; ++j) {
+            if (items[i][j] == "Martabak Kacang") martabakKacang++;
+            else if (items[i][j] == "Martabak Coklat") martabakCoklat++;
+            else if (items[i][j] == "Martabak Keju") martabakKeju++;
         }
     }
 
@@ -204,7 +187,10 @@ void inputProductionPlanning() {
 }
 
 int main() {
-    Order orders[100];  
+    int orderID[100];  
+    string customerName[100], status[100], items[100][10], specialRequest[100];
+    int itemCount[100];
+    double totalCost[100];
     int orderCount = 0;
     int choice;
 
@@ -220,33 +206,34 @@ int main() {
         cout << "8. Keluar\n";
         cout << "Pilih opsi (1-8): ";
         cin >> choice;
-        cin.ignore(); 
+        cin.ignore();
 
         switch (choice) {
         case 1:
-            takeOrder(orders, orderCount);
+            takeOrder(orderID[orderCount], customerName[orderCount], items[orderCount], itemCount[orderCount], totalCost[orderCount], status[orderCount], specialRequest[orderCount]);
+            orderCount++;
             break;
         case 2:
-            viewActiveOrders(orders, orderCount);
+            viewActiveOrders(orderID, customerName, totalCost, status, items, itemCount, orderCount);
             break;
         case 3:
-            updateOrderStatus(orders, orderCount);
+            updateOrderStatus(orderID, status, orderCount);
             break;
         case 4:
-            viewToppingUsage(orders, orderCount);
+            viewToppingUsage(items, itemCount, orderCount);
             break;
         case 5:
-            viewDailySalesReport(orders, orderCount);
+            viewDailySalesReport(totalCost, orderCount);
             break;
         case 6:
-            viewMenuPerformance(orders, orderCount);
+            viewMenuPerformance(items, itemCount, orderCount);
             break;
         case 7:
             inputProductionPlanning();
             break;
         case 8:
             cout << "Keluar dari program...\n";
-            return 0;  
+            return 0;
         default:
             cout << "Opsi tidak valid, coba lagi!" << endl;
         }
